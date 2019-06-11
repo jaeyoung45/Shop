@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+<mapper namespace="com.shop.mappers.adminMapper">
+
+	<!-- 카테고리 호출 -->
+	<select id="category" resultType="com.shop.domain.CategoryVO">
+		SELECT level, cateName, cateCode, cateCodeRef FROM goods_category 
+		start with cateCodeRef is null connect by prior cateCode = cateCodeRef
+	</select>
+
+	<!-- 상품 등록 -->
+	<insert id="register" parameterType="com.shop.domain.GoodsVO">
+		INSERT INTO tbl_goods(gdsNum, gdsName, cateCode, gdsPrice, gdsStock, gdsDes, gdsImg)
+		VALUES(tbl_goods_seq.nextval, #{gdsName}, #{cateCode}, #{gdsPrice}, #{gdsStock}, #{gdsDes}, #{gdsImg})
+	</insert>
+	<!-- 상품 등록 -->
+	<insert id="registerNull" parameterType="com.shop.domain.GoodsVO">
+		INSERT INTO tbl_goods(gdsNum, gdsName, cateCode, gdsPrice, gdsStock, gdsDes)
+		VALUES(tbl_goods_seq.nextval, #{gdsName}, #{cateCode}, #{gdsPrice}, #{gdsStock}, #{gdsDes})
+	</insert>
+
+	<!-- 상품 목록 -->
+	<select id="goodslist" resultType="com.shop.domain.GoodsViewVO">
+		SELECT * FROM tbl_goods ORDER BY gdsNum DESC
+	</select>
+	
+ 	<!-- 상품 조회 + 카테고리 조인 -->
+ 	<select id="goodsView" resultType="com.shop.domain.GoodsViewVO">
+ 		SELECT g.*, c.* FROM tbl_goods g 
+ 		INNER JOIN goods_category c ON g.cateCode = c.cateCode 
+ 		WHERE g.gdsNum = #{gdsNum}
+ 	</select>
+ 	
+ 	<!-- 상품 수정 -->
+ 	<update id="goodsModify" parameterType="com.shop.domain.GoodsVO">
+ 		UPDATE tbl_goods SET gdsName = #{gdsName}, cateCode = ${cateCode},
+ 		gdsPrice = #{gdsPrice}, gdsStock = #{gdsStock}, gdsDes = #{gdsDes}, gdsImg = #{gdsImg}
+ 		WHERE gdsNum = #{gdsNum}
+ 	</update>
+ 	<!-- 상품 수정 -->
+ 	<update id="goodsModifyNull" parameterType="com.shop.domain.GoodsVO">
+ 		UPDATE tbl_goods SET gdsName = #{gdsName}, cateCode = ${cateCode},
+ 		gdsPrice = #{gdsPrice}, gdsStock = #{gdsStock}, gdsDes = #{gdsDes}
+ 		WHERE gdsNum = #{gdsNum}
+ 	</update>
+ 	
+ 	<!-- 상품 삭제 -->
+ 	<delete id="goodsDelete" parameterType="com.shop.domain.GoodsVO">
+ 		DELETE FROM tbl_goods WHERE gdsNum = #{gdsNum}
+ 	</delete>
+ 	
+ 	<!-- 모든 유저의 주문 등록 -->
+ 	<select id="orderList" resultType="com.shop.domain.OrderVO">
+ 		SELECT
+ 			orderId, userId, orderRec, 
+ 			userAddr1, userAddr2, userAddr3,
+ 			orderPhon, amount, orderDate, delivery
+ 		FROM tbl_order
+ 	</select>
+ 	
+ 	<!-- 특정 주문 목록 -->
+ 	<select id="orderView" resultType="com.shop.domain.OrderListVO">
+	 		SELECT
+	     o.orderId, o.userId, o.orderRec,
+	     o.userAddr1, o.userAddr2, o.userAddr3,
+	     o.orderPhon, o.amount, o.orderDate, o.delivery,
+	     d.orderDetailsNum, d.gdsNum, d.cartStock,
+	     g.gdsName, g.gdsThumbImg, g.gdsPrice
+	 		FROM tbl_order o
+	         INNER JOIN tbl_order_details d
+	             ON o.orderId = d.orderId
+	         INNER JOIN tbl_goods g
+	             on d.gdsNum = g.gdsNum
+	     WHERE o.orderId = #{orderId}
+ 	</select>
+ 	
+ 	<!-- 배송 상태  -->
+ 	<update id="delivery">
+ 		UPDATE tbl_order
+ 			SET delivery = #{delivery}
+ 		WHERE orderId = #{orderId}
+ 	</update>
+ 	
+ 	<!-- 상품 수량 조절 -->
+ 	<update id="changeStock">
+ 		UPDATE tbl_goods
+ 			SET gdsStock = gdsStock - #{gdsStock}
+ 		WHERE gdsNum = #{gdsNum}
+ 	</update>
+ 	
+ 	<!-- 상품 수량 조절 보조 -->
+ 	<select id="ChangeStock_sub" resultType="com.shop.domain.OrderDetailVO">
+ 		SELECT
+ 			orderId, gdsNum, cartStock
+ 		FROM tbl_order_details
+ 			WHERE orderId = #{orderId}
+ 	</select>
+ 	
+ 	<!-- 모든 소감(댓글) -->
+ 	<select id="allReply" resultType="com.shop.domain.ReplyListVO">
+ 		SELECT
+ 			r.gdsNum, r.userId, r.repNum, r.repCon, r.repDate,
+ 			m.userName
+ 		FROM tbl_reply r
+ 			INNER JOIN tbl_member m
+ 				ON r.userId = m.userId
+ 	</select>
+ 	
+ 	<!-- 소감(댓글) 지우기 -->
+ 	<delete id="deleteReply">
+ 		DELETE FROM tbl_reply
+ 			WHERE repNum = #{repNum}
+ 	</delete>
+</mapper>
